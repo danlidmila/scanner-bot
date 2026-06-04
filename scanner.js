@@ -3,9 +3,9 @@ const { sendAlert } = require('./telegram');
 const { getLatestPairs } = require('./dexscreener');
 const { getRecentBasePairs, getBaseTokenMetadata, getNewToken } = require('./base');
 const { getRecentRaydiumPools, getTokenMetadata } = require('./solana');
+const { startPumpFunScanner } = require('./pumpfun');
 
 const SCAN_INTERVAL = parseInt(process.env.SCAN_INTERVAL || '4000', 10);
-
 let lastBaseBlock = 0;
 
 async function scanDexScreener(bot) {
@@ -16,7 +16,6 @@ async function scanDexScreener(bot) {
       const match = db.matchesWatchlist(pair.tokenName, pair.tokenSymbol);
       db.markSeen(pair.pairAddress, pair.chain, pair.tokenName, pair.tokenSymbol, !!match);
       if (match) {
-        console.log(`🚨 MATCH [DexScreener]: ${pair.tokenName} (${pair.tokenSymbol}) on ${pair.chain}`);
         await sendAlert(bot, { ...pair, matchedTerm: match.term });
       }
     }
@@ -36,15 +35,9 @@ async function scanBase(bot) {
       db.markSeen(event.pairAddress, 'base', metadata.name, metadata.symbol, false);
       const match = db.matchesWatchlist(metadata.name, metadata.symbol);
       if (match) {
-        console.log(`🚨 MATCH [Base]: ${metadata.name} (${metadata.symbol})`);
         await sendAlert(bot, {
-          chain: 'base',
-          tokenName: metadata.name,
-          tokenSymbol: metadata.symbol,
-          pairAddress: event.pairAddress,
-          dex: event.dex,
-          liquidity: null,
-          matchedTerm: match.term,
+          chain: 'base', tokenName: metadata.name, tokenSymbol: metadata.symbol,
+          pairAddress: event.pairAddress, dex: event.dex, liquidity: null, matchedTerm: match.term,
         });
       }
       if (event.blockNumber > lastBaseBlock) lastBaseBlock = event.blockNumber;
@@ -65,41 +58,5 @@ async function scanSolana(bot) {
       if (!metadata) continue;
       const match = db.matchesWatchlist(metadata.name, metadata.symbol);
       if (match) {
-        console.log(`🚨 MATCH [Solana]: ${metadata.name} (${metadata.symbol})`);
         await sendAlert(bot, {
-          chain: 'solana',
-          tokenName: metadata.name,
-          tokenSymbol: metadata.symbol,
-          pairAddress: pool.tokenMint,
-          dex: 'Raydium',
-          liquidity: null,
-          matchedTerm: match.term,
-        });
-      }
-    }
-  } catch (err) {
-    console.error('Solana scan error:', err.message);
-  }
-}
-
-function startScanners(bot) {
-  let isRunning = false;
-  const run = async () => {
-    if (isRunning) return;
-    isRunning = true;
-    try {
-      await Promise.allSettled([
-        scanDexScreener(bot),
-        scanBase(bot),
-        scanSolana(bot),
-      ]);
-    } finally {
-      isRunning = false;
-    }
-  };
-  run();
-  setInterval(run, SCAN_INTERVAL);
-  console.log(`Scanners running every ${SCAN_INTERVAL / 1000}s`);
-}
-
-module.exports = { startScanners };
+          chain: 'solana
