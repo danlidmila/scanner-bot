@@ -1,8 +1,10 @@
 const db = require('./db');
-const { sendAlert } = require('./telegram');
+const const { sendAlert } = require('./telegram');
 const { getLatestPairs } = require('./dexscreener');
 const { getRecentBasePairs, getBaseTokenMetadata, getNewToken } = require('./base');
 const { getRecentRaydiumPools, getTokenMetadata } = require('./solana');
+const db = require('./db');
+
 
 const SCAN_INTERVAL = parseInt(process.env.SCAN_INTERVAL || '4000', 10);
 
