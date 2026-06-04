@@ -36,8 +36,13 @@ async function scanBase(bot) {
       const match = db.matchesWatchlist(metadata.name, metadata.symbol);
       if (match) {
         await sendAlert(bot, {
-          chain: 'base', tokenName: metadata.name, tokenSymbol: metadata.symbol,
-          pairAddress: event.pairAddress, dex: event.dex, liquidity: null, matchedTerm: match.term,
+          chain: 'base',
+          tokenName: metadata.name,
+          tokenSymbol: metadata.symbol,
+          pairAddress: event.pairAddress,
+          dex: event.dex,
+          liquidity: null,
+          matchedTerm: match.term
         });
       }
       if (event.blockNumber > lastBaseBlock) lastBaseBlock = event.blockNumber;
@@ -59,4 +64,36 @@ async function scanSolana(bot) {
       const match = db.matchesWatchlist(metadata.name, metadata.symbol);
       if (match) {
         await sendAlert(bot, {
-          chain: 'solana
+          chain: 'solana',
+          tokenName: metadata.name,
+          tokenSymbol: metadata.symbol,
+          pairAddress: pool.tokenMint,
+          dex: 'Raydium',
+          liquidity: null,
+          matchedTerm: match.term
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Solana scan error:', err.message);
+  }
+}
+
+function startScanners(bot) {
+  startPumpFunScanner(bot);
+  let isRunning = false;
+  const run = async () => {
+    if (isRunning) return;
+    isRunning = true;
+    try {
+      await Promise.allSettled([scanDexScreener(bot), scanBase(bot), scanSolana(bot)]);
+    } finally {
+      isRunning = false;
+    }
+  };
+  run();
+  setInterval(run, SCAN_INTERVAL);
+  console.log('Scanners running every ' + (SCAN_INTERVAL / 1000) + 's + PumpFun real-time');
+}
+
+module.exports = { startScanners };
