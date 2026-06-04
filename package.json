@@ -12,7 +12,8 @@
     "better-sqlite3": "^9.4.0",
     "dotenv": "^16.3.1",
     "ethers": "^6.9.0",
-    "node-telegram-bot-api": "^0.64.0"
+    "node-telegram-bot-api": "^0.64.0",
+    "ws": "^8.16.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
